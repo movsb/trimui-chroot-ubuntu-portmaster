@@ -109,6 +109,8 @@ EOF
         python3 \
         ca-certificates \
         libfreetype6 \
+        libglib2.0-0t64 \
+        libjpeg-turbo8 \
         libopenal1 \
         libmodplug1 \
         libvorbisfile3 \

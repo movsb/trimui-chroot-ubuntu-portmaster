@@ -45,12 +45,18 @@ trimui_mount_chroot || exit 1
 
 # Use TrimUI's native Apps-style entries under /mnt/SDCARD/Ports. PortMaster
 # may rewrite its config during updates, so enforce this before every launch.
-chroot "$ROOTFS" /usr/bin/python3 - "$CONTROLFOLDER/config/config.json" <<'PY' || exit 1
+# TrimUI's launcher field accepts a script path, not a command plus arguments;
+# turn PortMaster's command into a per-game launch.sh wrapper.
+reconcile_native_ports() {
+chroot "$ROOTFS" /usr/bin/python3 - "$CONTROLFOLDER/config/config.json" "$PM_APP" <<'PY'
 import json
 import os
+import shlex
 import sys
+from pathlib import Path
 
 path = sys.argv[1]
+pm_app = sys.argv[2]
 with open(path, encoding="utf-8") as fp:
     data = json.load(fp)
 data["trimui-port-mode"] = "ports"
@@ -59,6 +65,40 @@ with open(temporary, "w", encoding="utf-8") as fp:
     json.dump(data, fp, ensure_ascii=False, indent=4)
     fp.write("\n")
 os.replace(temporary, path)
-PY
 
-exec chroot "$ROOTFS" /usr/bin/env PM_APP="$PM_APP" "$INNER_LAUNCHER" "$@"
+prefix = f"{pm_app}/launch.chroot.sh /bin/bash "
+for port_dir in Path("/mnt/SDCARD/Ports").glob("portmaster-*"):
+    config = port_dir / "config.json"
+    if not config.is_file():
+        continue
+    with config.open(encoding="utf-8") as fp:
+        entry = json.load(fp)
+    command = entry.get("launch", "")
+    if not command.startswith(prefix):
+        continue
+    arguments = shlex.split(command)
+    launcher = port_dir / "launch.sh"
+    launcher.write_text(
+        "#!/bin/sh\nexec " + " ".join(shlex.quote(arg) for arg in arguments) + "\n",
+        encoding="utf-8",
+    )
+    launcher.chmod(0o755)
+    entry["launch"] = "launch.sh"
+    temporary = str(config) + ".tmp"
+    with open(temporary, "w", encoding="utf-8") as fp:
+        json.dump(entry, fp, ensure_ascii=False, indent=4)
+        fp.write("\n")
+    os.replace(temporary, config)
+PY
+}
+
+reconcile_native_ports || exit 1
+
+chroot "$ROOTFS" /usr/bin/env PM_APP="$PM_APP" "$INNER_LAUNCHER" "$@"
+status=$?
+
+# A PortMaster installation creates entries while its UI is running. Convert
+# those newly-created entries as soon as PortMaster exits.
+reconcile_native_ports || exit 1
+
+exit "$status"

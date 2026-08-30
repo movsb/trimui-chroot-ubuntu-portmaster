@@ -89,6 +89,9 @@ trimui_mount_chroot() {
     trimui_mount_dir "$PM_APP/PortMaster" "$ROOTFS/roms/ports/PortMaster" || return 1
     trimui_mount_file /etc/openwrt_release "$ROOTFS/etc/openwrt_release" || return 1
     trimui_mount_file /etc/version "$ROOTFS/etc/version" || return 1
+    # The A133 codec only accepts a narrow hardware format. TrimUI's ALSA
+    # config supplies the plug/dmix conversion expected by SDL games.
+    trimui_mount_file /etc/asound.conf "$ROOTFS/etc/asound.conf" || return 1
 
     # TrimUI's customized SDL is mounted at its native path. Generic host GPU
     # libraries are namespaced so Ubuntu's own /usr/lib remains visible.

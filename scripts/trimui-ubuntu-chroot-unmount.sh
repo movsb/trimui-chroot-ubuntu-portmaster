@@ -9,6 +9,7 @@ for target in \
     "$ROOTFS/roms/ports" \
     "$ROOTFS/usr/trimui/lib" \
     "$ROOTFS/opt/trimui-host/usr/lib" \
+    "$ROOTFS/etc/asound.conf" \
     "$ROOTFS/etc/openwrt_release" \
     "$ROOTFS/etc/version" \
     "$ROOTFS/mnt/SDCARD" \

@@ -44,7 +44,7 @@ PortMaster 官方 ZIP 虽然自带顶层 `Apps/PortMaster`，安装器会先解�
 
 PortMaster 官方 `launch.sh` 和 `PortMaster/control.txt` 都带有固定的 `/mnt/SDCARD/Apps/PortMaster/PortMaster` controlfolder，而且自更新可能恢复这些文件。因此只由本项目的宿主入口在每次启动、进入 chroot 之前改写并校验路径，同时为 `cd` 添加失败即退出保护。setup 不重复维护这套逻辑。
 
-入口强制使用 PortMaster 的 TrimUI `ports` 模式，在 `/mnt/SDCARD/Ports/portmaster-游戏名` 创建原生 App 目录。启动自愈还会修改官方入口模板，使其中的游戏脚本通过本项目的 `launch.chroot.sh` 执行，而不是让宿主直接运行 chroot 内的 `/roms/ports/*.sh`。
+入口强制使用 PortMaster 的 TrimUI `ports` 模式，在 `/mnt/SDCARD/Ports/portmaster-游戏名` 创建原生 App 目录。每个入口包含独立的 `launch.sh`；TrimUI 只启动该脚本，再由它通过本项目的 `launch.chroot.sh` 执行 chroot 内的 `/roms/ports/*.sh`。启动自愈会修复 PortMaster 更新或新装游戏产生的旧式入口。
 
 初始化脚本默认将 arm64 APT 源从 Ubuntu 官方 ports 站切换为阿里云 `http://mirrors.aliyun.com/ubuntu-ports/`，原始 deb822 配置只备份一次为 `ubuntu.sources.before-china-mirror`。需要使用其它镜像时，可在调用脚本前设置 `UBUNTU_PORTS_MIRROR`。
 
