@@ -26,10 +26,10 @@ const (
 	defaultSDCard        = `/mnt/SDCARD`
 	defaultRootFS        = `/mnt/UDISK/` + rootFSDirName
 	defaultPortMasterApp = defaultSDCard + `/Apps/` + portMasterAppDirName
-	// portMasterURL     = `https://github.com/PortsMaster/PortMaster-GUI/releases/download/2026.07.28-1212/trimui.portmaster.zip`
-	// ubuntuRootfsURL   = `https://cdimage.ubuntu.com/ubuntu-base/releases/24.04.4/release/ubuntu-base-24.04.4-base-arm64.tar.gz`
-	portMasterURL     = `http://192.168.10.124:4637/trimui.portmaster.zip`
-	ubuntuRootfsURL   = `http://192.168.10.124:4637/ubuntu-base-24.04.4-base-arm64.tar.gz`
+	portMasterURL        = `https://github.com/PortsMaster/PortMaster-GUI/releases/download/2026.07.28-1212/trimui.portmaster.zip`
+	ubuntuRootfsURL      = `https://cdimage.ubuntu.com/ubuntu-base/releases/24.04.4/release/ubuntu-base-24.04.4-base-arm64.tar.gz`
+	// portMasterURL     = `http://192.168.10.124:4637/trimui.portmaster.zip`
+	// ubuntuRootfsURL   = `http://192.168.10.124:4637/ubuntu-base-24.04.4-base-arm64.tar.gz`
 	ubuntuArchiveName = `ubuntu-base-24.04.4-base-arm64.tar.gz`
 )
 
