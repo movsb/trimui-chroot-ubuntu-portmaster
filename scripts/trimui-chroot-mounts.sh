@@ -41,6 +41,10 @@ trimui_make_compat_libs() {
         libsrv_um.so \
         libglslcompiler.so \
         libusc.so \
+        libcurl.so.4 \
+        libnghttp2.so.14 \
+        libssl.so.1.1 \
+        libcrypto.so.1.1 \
         libpng12.so.0.56.0 \
         libjpeg.so.9.1.0
     do
