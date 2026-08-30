@@ -1,86 +1,121 @@
-# Ubuntu PortMaster 环境管理器
+# Ubuntu PortMaster
 
-面向 TrimUI 的 fbiw App，用于全量重装和卸载 Ubuntu 24.04 arm64 chroot + PortMaster 环境。
+在 TrimUI 设备上通过图形界面一键安装和管理 Ubuntu 24.04 chroot + PortMaster。
 
-## 输入文件
+项目将 PortMaster 运行环境与 TrimUI 宿主系统隔离，同时保留对宿主 SDL、GPU、音频和输入设备的使用，让 PortMaster 及其游戏能够从 TrimUI 原生界面启动。
 
-点击“清理并全量安装”时，App 总是先卸载挂载并删除现有 Ubuntu rootfs 与 PortMaster 程序，再执行完整安装，不再区分首次安装和修复。游戏与存档保留。如果安装包不存在，App 会列出手工放置路径和下载地址：按 A 清理并自动下载，按 B 取消。服务器返回文件总大小时，界面显示百分比和“已下载 / 总大小”；未返回总大小时显示已下载大小。
+## 功能
 
-内置下载地址：
+- 一键安装 Ubuntu 24.04 arm64 rootfs 和 PortMaster
+- 缺少安装包时支持直接下载，并显示下载进度
+- 内置 CA 根证书，不依赖 TrimUI 固件的证书环境
+- 使用中国大陆 Ubuntu 镜像安装运行依赖
+- 自动配置 chroot 的网络、设备、图形、音频和 SD 卡挂载
+- 将游戏与存档保存在 SD 卡，重装环境时不会删除
+- 为 PortMaster 游戏生成 TrimUI 原生入口
+- 自动生成独立的游戏启动脚本
+- 将游戏图标规范为 300×300 透明画布
+- 支持从界面完整卸载 Ubuntu 和 PortMaster 环境
+
+## 安装
+
+下载或构建 `UbuntuPortMaster.zip`，解压到：
 
 ```text
-Ubuntu: https://cdimage.ubuntu.com/ubuntu-base/releases/24.04.4/release/ubuntu-base-24.04.4-base-arm64.tar.gz
-PortMaster: https://github.com/PortsMaster/PortMaster-GUI/releases/download/2026.07.28-1212/trimui.portmaster.zip
+/mnt/SDCARD/Apps
 ```
 
-自动下载的落盘位置：
+最终目录应为：
+
+```text
+/mnt/SDCARD/Apps/UbuntuPortMaster
+```
+
+随后在 TrimUI 的 Apps 页面打开“安装Port环境”，选择安装。
+
+安装器需要以下两个文件：
 
 ```text
 /mnt/SDCARD/ubuntu-base-24.04.4-base-arm64.tar.gz
 /mnt/SDCARD/trimui.portmaster.zip
 ```
 
-下载先写入同目录的 `.part` 文件，成功后原子改名；失败不会把残缺文件当成安装包。
+文件不存在时，可以根据界面提示自动下载，也可以手工下载后放到 SD 卡根目录。
 
-TrimUI 宿主固件可能没有系统 CA 根证书。App 在二进制中内嵌 `assets/cacert.pem`（curl CA Extract 发布的 Mozilla CA bundle），并将其追加到 Go 的系统证书池，因此首次下载 Ubuntu rootfs 时不依赖宿主或 chroot 提供证书。TLS 证书校验保持开启，最低版本为 TLS 1.2。
+默认下载地址：
 
-手工下载时，Ubuntu rootfs 包必须放在：
+- [Ubuntu Base 24.04.4 arm64](https://cdimage.ubuntu.com/ubuntu-base/releases/24.04.4/release/ubuntu-base-24.04.4-base-arm64.tar.gz)
+- [PortMaster for TrimUI](https://github.com/PortsMaster/PortMaster-GUI/releases/download/2026.07.28-1212/trimui.portmaster.zip)
+
+## 使用
+
+环境安装完成后，从 TrimUI Apps 页面启动 `UbuntuPortMasterRuntime` 进入 PortMaster。
+
+PortMaster 安装的游戏会保存到：
 
 ```text
-/mnt/SDCARD/ubuntu-base-24.04.4-base-arm64.tar.gz
+/mnt/SDCARD/Data/ports
 ```
 
-PortMaster 包必须放在：
+对应的 TrimUI 原生入口会生成到：
 
 ```text
-/mnt/SDCARD/trimui.portmaster.zip
+/mnt/SDCARD/Ports/portmaster-游戏名
 ```
 
-安装器只扫描 `/mnt/SDCARD` 根目录，不扫描 App 目录或 `payload` 子目录。
+入口包含 `config.json`、`launch.sh` 和经过规范化处理的 `icon.png`。退出 PortMaster 后，新游戏即可从 TrimUI 的 Ports 页面启动。
 
-PortMaster 官方 ZIP 虽然自带顶层 `Apps/PortMaster`，安装器会先解压到临时目录，再移动到本项目的命名空间。默认程序目录为 `/mnt/SDCARD/Apps/UbuntuPortMasterRuntime`，Ubuntu 安装到 `/mnt/UDISK/ubuntu-portmaster-rootfs`，不会占用通用的 `PortMaster` 或 `ubuntu` 目录。
+## 数据与目录
 
-需要更换命名空间时，只修改 `manager.go` 顶部的 `rootFSDirName` 和 `portMasterAppDirName` 两个常量；Go 管理器会把最终路径传给初始化脚本，启动器再从生成的 `trimui-chroot.conf` 读取路径。
+默认目录如下：
 
-PortMaster 官方 `launch.sh` 和 `PortMaster/control.txt` 都带有固定的 `/mnt/SDCARD/Apps/PortMaster/PortMaster` controlfolder，而且自更新可能恢复这些文件。因此只由本项目的宿主入口在每次启动、进入 chroot 之前改写并校验路径，同时为 `cd` 添加失败即退出保护。setup 不重复维护这套逻辑。
+```text
+/mnt/UDISK/ubuntu-portmaster-rootfs            Ubuntu rootfs
+/mnt/SDCARD/Apps/UbuntuPortMasterRuntime       PortMaster 运行环境
+/mnt/SDCARD/Data/ports                         游戏和存档
+/mnt/SDCARD/Ports/portmaster-*                 TrimUI 原生游戏入口
+```
 
-入口强制使用 PortMaster 的 TrimUI `ports` 模式，在 `/mnt/SDCARD/Ports/portmaster-游戏名` 创建原生 App 目录。每个入口包含独立的 `launch.sh`；TrimUI 只启动该脚本，再由它通过本项目的 `launch.chroot.sh` 执行 chroot 内的 `/roms/ports/*.sh`。启动自愈会修复 PortMaster 更新或新装游戏产生的旧式入口。
+Ubuntu 和 PortMaster 的目录名可以通过 `manager.go` 顶部的以下常量调整：
 
-PortMaster 写入入口图片后，管理器会参照 fbui 图标样式，将内容中心裁剪并缩放到 180×180，再居中放入 300×300 的透明正方形画布，避免 TrimUI 前端直接显示原始大图。
+```go
+rootFSDirName
+portMasterAppDirName
+```
 
-初始化脚本默认将 arm64 APT 源从 Ubuntu 官方 ports 站切换为阿里云 `http://mirrors.aliyun.com/ubuntu-ports/`，原始 deb822 配置只备份一次为 `ubuntu.sources.before-china-mirror`。需要使用其它镜像时，可在调用脚本前设置 `UBUNTU_PORTS_MIRROR`。
+## 重新安装与卸载
 
-APT 使用精简缓存配置：不下载翻译索引，不生成 `pkgcache.bin` 和 `srcpkgcache.bin`，也不保留下载后的 `.deb`。所有依赖成功安装后，脚本执行 `apt-get clean` 并清空 `/var/lib/apt/lists`；下次需要使用 APT 时先重新执行 `apt-get update`。
+安装操作始终执行全量重装：先删除现有 Ubuntu rootfs 和 PortMaster 运行环境，再重新安装。
 
-Ubuntu Base 下载物是 gzip 压缩的 tar archive。设备端初始化脚本先执行 `gzip -t`，再用 BusyBox `tar -xzpf` 解压到同一文件系统的临时目录；仅在确认 `bin/bash` 可执行后才将目录改名为配置的 rootfs 路径。解压失败或被中断时会清理临时目录。
+卸载会删除：
+
+- Ubuntu rootfs
+- PortMaster 运行环境
+- SD 卡根目录中的 Ubuntu 和 PortMaster 安装包
+
+以下目录不会删除：
+
+```text
+/mnt/SDCARD/Data/ports
+```
+
+因此已安装游戏及其存档会保留。
 
 ## 构建
-
-项目依赖同级工作区中的 fbiw：
 
 ```sh
 GOEXPERIMENT=simd go test ./...
 ./make.bash
 ```
 
-生成：
+构建产物：
 
 ```text
 UbuntuPortMaster.zip
 ```
 
-解压到 `/mnt/SDCARD/Apps` 后可在 TrimUI Apps 页面运行。
+## 技术文档
 
-## 卸载语义
+完整的环境结构、挂载关系和手工复现步骤见：
 
-卸载会永久删除环境，无法恢复。App 会：
-
-1. 卸载 chroot 的全部挂载；
-2. 若仍有 busy mount 则停止；
-3. 删除配置的 rootfs（默认 `/mnt/UDISK/ubuntu-portmaster-rootfs`）；
-4. 删除配置的 PortMaster App（默认 `/mnt/SDCARD/Apps/UbuntuPortMasterRuntime`）；
-5. 删除自动下载的 Ubuntu 和 PortMaster 安装包。
-
-`/mnt/SDCARD/Data/ports` 中的游戏与存档保留。
-
-详细底层说明见 `docs/trimui-ubuntu-portmaster-reproducible.md`。
+[docs/trimui-ubuntu-portmaster-reproducible.md](docs/trimui-ubuntu-portmaster-reproducible.md)
