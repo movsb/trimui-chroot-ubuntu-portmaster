@@ -1,0 +1,33 @@
+#!/bin/sh
+
+# Run the SD-card PortMaster package or a port command inside Ubuntu.
+INNER_LAUNCHER=/usr/local/bin/trimui-portmaster-chroot
+
+APP_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+. "$APP_DIR/trimui-chroot.conf" || exit 1
+
+# PortMaster self-updates can restore upstream's hardcoded Apps/PortMaster
+# paths. Repair them before every launch so a completed update cannot break
+# the next invocation of this namespaced installation.
+CONTROLFOLDER="$PM_APP/PortMaster"
+sed -i \
+    "s|^controlfolder=.*|controlfolder=\"$CONTROLFOLDER\"|" \
+    "$PM_APP/launch.sh" || exit 1
+sed -i \
+    "s|^export controlfolder=.*|export controlfolder=\"$CONTROLFOLDER\"|" \
+    "$CONTROLFOLDER/control.txt" || exit 1
+sed -i \
+    's#^cd "$controlfolder"$#cd "$controlfolder" || exit 1#' \
+    "$PM_APP/launch.sh" || exit 1
+if ! grep -Fqx "controlfolder=\"$CONTROLFOLDER\"" "$PM_APP/launch.sh" ||
+   ! grep -Fqx "export controlfolder=\"$CONTROLFOLDER\"" "$CONTROLFOLDER/control.txt" ||
+   ! grep -Fqx 'cd "$controlfolder" || exit 1' "$PM_APP/launch.sh"
+then
+    echo "Could not repair PortMaster controlfolder: $CONTROLFOLDER" >&2
+    exit 1
+fi
+
+. "$APP_DIR/trimui-chroot-mounts.sh" || exit 1
+trimui_mount_chroot || exit 1
+
+exec chroot "$ROOTFS" /usr/bin/env PM_APP="$PM_APP" "$INNER_LAUNCHER" "$@"
