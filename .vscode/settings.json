@@ -1,0 +1,13 @@
+{
+	"cSpell.words": [
+		"fbiw",
+		"portmaster",
+		"rootfs",
+		"SDCARD",
+		"trimui",
+		"UDISK"
+	],
+	"go.toolsEnvVars": {
+		"GOEXPERIMENT": "simd"
+	}
+}

@@ -1,0 +1,7 @@
+{
+  "package": "trimui-chroot-ubuntu-portmaster",
+  "label": "安装Port环境",
+  "icontop": "icon.png",
+  "launch": "launch.sh",
+  "description": "一键安装或卸载 Chroot Ubuntu PortMaster 环境"
+}
