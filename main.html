@@ -1,0 +1,39 @@
+<document>
+<style>
+document { color: white; }
+#page { background-color: #111827; padding: 34; }
+#title { font-size: 34; color: #f8fafc; }
+#subtitle { font-size: 20; color: #93c5fd; }
+#card { background-color: #1f2937; padding: 24; }
+#status { font-size: 28; color: #86efac; }
+#details { font-size: 20; color: #d1d5db; }
+button { width: 340; height: 66; }
+button.selected { outline-width: 3; outline-color: white; }
+#log-panel { background-color: #0b1220; padding: 16; height: 226; }
+#log { font-size: 20; color: #cbd5e1; }
+#hint { color: #94a3b8; font-size: 18; }
+</style>
+
+<block id="page" fill>
+	<text id="title">Ubuntu PortMaster 环境</text>
+	<text id="subtitle">Ubuntu 24.04 arm64 chroot · TrimUI 宿主图形驱动</text>
+	<spacer height="18"></spacer>
+	<block id="card">
+		<text id="status">正在检测…</text>
+		<spacer height="8"></spacer>
+		<text id="details"></text>
+	</block>
+	<spacer height="18"></spacer>
+	<inline align="center">
+		<button id="install" variant="primary"><text>安装环境</text></button>
+		<spacer width="22"></spacer>
+		<button id="uninstall" variant="destructive"><text>卸载环境</text></button>
+	</inline>
+	<spacer height="18"></spacer>
+	<block id="log-panel">
+		<text id="log">等待操作。</text>
+	</block>
+	<spacer height="12"></spacer>
+	<text id="hint">←→ 选择 · A 确认 · B 退出。安装包统一放在 SD 卡根目录。</text>
+</block>
+</document>
