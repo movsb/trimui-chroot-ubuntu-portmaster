@@ -55,6 +55,13 @@ func main() {
 		fmt.Print(status)
 		return
 	}
+	if len(os.Args) == 3 && os.Args[1] == "--launch-port" {
+		if err := launchPort(manager, os.Args[2]); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
 
 	app := fbiw.NewApp(fbiw.WithSystemFont(os.DirFS(`/usr/trimui/res`), `full.ttf`))
 	defer app.Close()

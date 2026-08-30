@@ -12,7 +12,7 @@ APP_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 CONTROLFOLDER="$PM_APP/PortMaster"
 PLATFORM_FILE="$CONTROLFOLDER/pylibs/harbourmaster/platform.py"
 PYLIB_ZIP="$CONTROLFOLDER/pylibs.zip"
-PORT_LAUNCH="$PM_APP/launch.chroot.sh /bin/bash {{PORTSCRIPT}}"
+PORT_LAUNCH="$MANAGER_EXECUTABLE --launch-port {{PORTSCRIPT}}"
 
 . "$APP_DIR/trimui-chroot-mounts.sh" || exit 1
 trimui_mount_chroot || exit 1
@@ -32,6 +32,7 @@ sed -i \
 # After first launch, patch the extracted file instead.
 chroot "$ROOTFS" /usr/bin/python3 - "$PLATFORM_FILE" "$PYLIB_ZIP" "$PORT_LAUNCH" <<'PY' || exit 1
 import os
+import re
 import sys
 import zipfile
 
@@ -45,7 +46,10 @@ def patch(data):
     if old_launch in text:
         text = text.replace(old_launch, new_launch)
     elif new_launch not in text:
-        raise RuntimeError("unknown PortMaster launch template")
+        pattern = r'"launch":"[^"\n]*\{\{PORTSCRIPT\}\}"'
+        text, replacements = re.subn(pattern, new_launch, text, count=1)
+        if replacements != 1:
+            raise RuntimeError("unknown PortMaster launch template")
 
     old_icon = '("icon-pre" + image_file.suffix)'
     new_icon = '("icon.png")'
@@ -93,7 +97,7 @@ fi
 # TrimUI's launcher field accepts a script path, not a command plus arguments;
 # turn PortMaster's command into a per-game launch.sh wrapper.
 reconcile_native_ports() {
-chroot "$ROOTFS" /usr/bin/python3 - "$CONTROLFOLDER/config/config.json" "$PM_APP" <<'PY'
+chroot "$ROOTFS" /usr/bin/python3 - "$CONTROLFOLDER/config/config.json" "$MANAGER_EXECUTABLE" <<'PY'
 import json
 import os
 import shlex
@@ -101,7 +105,7 @@ import sys
 from pathlib import Path
 
 path = sys.argv[1]
-pm_app = sys.argv[2]
+manager = sys.argv[2]
 os.makedirs(os.path.dirname(path), exist_ok=True)
 if os.path.isfile(path):
     with open(path, encoding="utf-8") as fp:
@@ -115,7 +119,7 @@ with open(temporary, "w", encoding="utf-8") as fp:
     fp.write("\n")
 os.replace(temporary, path)
 
-prefix = f"{pm_app}/launch.chroot.sh /bin/bash "
+prefix = f"{manager} --launch-port "
 for port_dir in Path("/mnt/SDCARD/Ports").glob("portmaster-*"):
     config = port_dir / "config.json"
     if not config.is_file():
@@ -144,11 +148,11 @@ PY
 reconcile_native_ports || exit 1
 
 normalize_native_icons() {
-    [ -x "${ICON_NORMALIZER:-}" ] || return 0
+    [ -x "${MANAGER_EXECUTABLE:-}" ] || return 0
     for icon in /mnt/SDCARD/Ports/portmaster-*/icon.png
     do
         [ -f "$icon" ] || continue
-        "$ICON_NORMALIZER" --normalize-icon "$icon" || return 1
+        "$MANAGER_EXECUTABLE" --normalize-icon "$icon" || return 1
     done
 }
 

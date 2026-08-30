@@ -137,10 +137,11 @@ cp "$SCRIPT_DIR/trimui-portmaster-chroot-launch.sh" \
 cp "$SCRIPT_DIR/trimui-chroot-mounts.sh" \
     "$PM_APP/trimui-chroot-mounts.sh"
 {
+    manager_dir=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
     printf "ROOTFS='%s'\n" "$ROOTFS"
     printf "SDCARD='%s'\n" "$SDCARD"
     printf "PM_APP='%s'\n" "$PM_APP"
-    printf "ICON_NORMALIZER='%s'\n" "$SCRIPT_DIR/../trimui-chroot-manager"
+    printf "MANAGER_EXECUTABLE='%s/trimui-chroot-manager'\n" "$manager_dir"
 } > "$PM_APP/trimui-chroot.conf"
 chmod 0755 \
     "$ROOTFS/usr/local/bin/trimui-portmaster-chroot" \

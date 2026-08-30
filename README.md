@@ -71,6 +71,8 @@ PortMaster 安装的游戏会保存到：
 
 入口包含 `config.json`、`launch.sh` 和经过规范化处理的 `icon.png`。退出 PortMaster 后，新游戏即可从 TrimUI 的 Ports 页面启动。
 
+`launch.sh` 先进入本 App 的 `trimui-chroot-manager --launch-port`。manager 会读取游戏的 `port.json`：对于 PortMaster 标记为 `rtr: false`、需要用户自行提供正版游戏文件的 port，启动前会显示官方安装说明；用户确认后才建立 chroot 环境并运行游戏。该判断不依赖 fbui 或其它前端。
+
 ## 数据与目录
 
 默认目录如下：

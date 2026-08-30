@@ -219,6 +219,8 @@ chroot 内入口：
 
 `config.json` 由本 App 直接管理，不创建备份。官方 `launch.sh` 不修改、也不备份；它由 chroot 内层入口调用。TrimUI 菜单始终进入本 App 管理的 `launch.chroot.sh`。
 
+PortMaster 生成的原生游戏入口则先调用 `trimui-chroot-manager --launch-port <PORTSCRIPT>`。manager 根据对应 `port.json` 的 `attr.rtr` 判断该 port 是否自带本体；`rtr: false` 时使用 fbiw AlertDialog 显示 `attr.inst` 或 `attr.inst_md` 安装说明，确认后才通过 `launch.chroot.sh` 进入 chroot 启动游戏。
+
 ## 手工进入 chroot
 
 先运行挂载模块，再进入：
