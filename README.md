@@ -46,6 +46,8 @@ PortMaster 官方 `launch.sh` 和 `PortMaster/control.txt` 都带有固定的 `/
 
 入口强制使用 PortMaster 的 TrimUI `ports` 模式，在 `/mnt/SDCARD/Ports/portmaster-游戏名` 创建原生 App 目录。每个入口包含独立的 `launch.sh`；TrimUI 只启动该脚本，再由它通过本项目的 `launch.chroot.sh` 执行 chroot 内的 `/roms/ports/*.sh`。启动自愈会修复 PortMaster 更新或新装游戏产生的旧式入口。
 
+PortMaster 写入入口图片后，管理器会参照 fbui 图标样式，将内容中心裁剪并缩放到 180×180，再居中放入 300×300 的透明正方形画布，避免 TrimUI 前端直接显示原始大图。
+
 初始化脚本默认将 arm64 APT 源从 Ubuntu 官方 ports 站切换为阿里云 `http://mirrors.aliyun.com/ubuntu-ports/`，原始 deb822 配置只备份一次为 `ubuntu.sources.before-china-mirror`。需要使用其它镜像时，可在调用脚本前设置 `UBUNTU_PORTS_MIRROR`。
 
 APT 使用精简缓存配置：不下载翻译索引，不生成 `pkgcache.bin` 和 `srcpkgcache.bin`，也不保留下载后的 `.deb`。所有依赖成功安装后，脚本执行 `apt-get clean` 并清空 `/var/lib/apt/lists`；下次需要使用 APT 时先重新执行 `apt-get update`。

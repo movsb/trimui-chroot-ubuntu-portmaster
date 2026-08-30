@@ -140,6 +140,7 @@ cp "$SCRIPT_DIR/trimui-chroot-mounts.sh" \
     printf "ROOTFS='%s'\n" "$ROOTFS"
     printf "SDCARD='%s'\n" "$SDCARD"
     printf "PM_APP='%s'\n" "$PM_APP"
+    printf "ICON_NORMALIZER='%s'\n" "$SCRIPT_DIR/../trimui-chroot-manager"
 } > "$PM_APP/trimui-chroot.conf"
 chmod 0755 \
     "$ROOTFS/usr/local/bin/trimui-portmaster-chroot" \

@@ -94,11 +94,23 @@ PY
 
 reconcile_native_ports || exit 1
 
+normalize_native_icons() {
+    [ -x "${ICON_NORMALIZER:-}" ] || return 0
+    for icon in /mnt/SDCARD/Ports/portmaster-*/icon.png
+    do
+        [ -f "$icon" ] || continue
+        "$ICON_NORMALIZER" --normalize-icon "$icon" || return 1
+    done
+}
+
+normalize_native_icons || exit 1
+
 chroot "$ROOTFS" /usr/bin/env PM_APP="$PM_APP" "$INNER_LAUNCHER" "$@"
 status=$?
 
 # A PortMaster installation creates entries while its UI is running. Convert
 # those newly-created entries as soon as PortMaster exits.
 reconcile_native_ports || exit 1
+normalize_native_icons || exit 1
 
 exit "$status"

@@ -33,6 +33,14 @@ type window struct {
 }
 
 func main() {
+	if len(os.Args) == 3 && os.Args[1] == "--normalize-icon" {
+		if err := normalizeIcon(os.Args[2]); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
+
 	manager, err := NewManager()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
