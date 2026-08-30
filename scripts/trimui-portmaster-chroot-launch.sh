@@ -24,10 +24,17 @@ sed -i \
 sed -i \
     "s#\"launch\":\"{{PORTSCRIPT}}\"#\"launch\":\"$PORT_LAUNCH\"#" \
     "$PLATFORM_FILE" || exit 1
+# In ports mode upstream writes "icon.png" to config.json, but copies the
+# artwork as icon-pre.png/icon-pre.jpg. Keep the configured filename stable;
+# TrimUI detects the image format from its contents.
+sed -i \
+    's/("icon-pre" + image_file.suffix)/("icon.png")/' \
+    "$PLATFORM_FILE" || exit 1
 if ! grep -Fqx "controlfolder=\"$CONTROLFOLDER\"" "$PM_APP/launch.sh" ||
    ! grep -Fqx "export controlfolder=\"$CONTROLFOLDER\"" "$CONTROLFOLDER/control.txt" ||
    ! grep -Fqx 'cd "$controlfolder" || exit 1' "$PM_APP/launch.sh" ||
-   ! grep -Fq "\"launch\":\"$PORT_LAUNCH\"" "$PLATFORM_FILE"
+   ! grep -Fq "\"launch\":\"$PORT_LAUNCH\"" "$PLATFORM_FILE" ||
+   ! grep -Fq 'target_file = new_port_dir / ("icon.png")' "$PLATFORM_FILE"
 then
     echo "Could not repair PortMaster paths: $CONTROLFOLDER" >&2
     exit 1
