@@ -4,6 +4,12 @@
 
 项目将 PortMaster 运行环境与 TrimUI 宿主系统隔离，同时保留对宿主 SDL、GPU、音频和输入设备的使用，让 PortMaster 及其游戏能够从 TrimUI 原生界面启动。
 
+## 运行截图
+
+### 环境管理器
+
+![Ubuntu PortMaster 环境管理器](docs/images/installer.jpg)
+
 ## 功能
 
 - 一键安装 Ubuntu 24.04 arm64 rootfs 和 PortMaster

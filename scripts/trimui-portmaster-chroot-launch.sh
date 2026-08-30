@@ -11,7 +11,12 @@ APP_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # the next invocation of this namespaced installation.
 CONTROLFOLDER="$PM_APP/PortMaster"
 PLATFORM_FILE="$CONTROLFOLDER/pylibs/harbourmaster/platform.py"
+PYLIB_ZIP="$CONTROLFOLDER/pylibs.zip"
 PORT_LAUNCH="$PM_APP/launch.chroot.sh /bin/bash {{PORTSCRIPT}}"
+
+. "$APP_DIR/trimui-chroot-mounts.sh" || exit 1
+trimui_mount_chroot || exit 1
+
 sed -i \
     "s|^controlfolder=.*|controlfolder=\"$CONTROLFOLDER\"|" \
     "$PM_APP/launch.sh" || exit 1
@@ -21,27 +26,67 @@ sed -i \
 sed -i \
     's#^cd "$controlfolder"$#cd "$controlfolder" || exit 1#' \
     "$PM_APP/launch.sh" || exit 1
-sed -i \
-    "s#\"launch\":\"{{PORTSCRIPT}}\"#\"launch\":\"$PORT_LAUNCH\"#" \
-    "$PLATFORM_FILE" || exit 1
-# In ports mode upstream writes "icon.png" to config.json, but copies the
-# artwork as icon-pre.png/icon-pre.jpg. Keep the configured filename stable;
-# TrimUI detects the image format from its contents.
-sed -i \
-    's/("icon-pre" + image_file.suffix)/("icon.png")/' \
-    "$PLATFORM_FILE" || exit 1
+
+# On a fresh install PortMaster keeps platform.py in pylibs.zip. Patch the ZIP
+# member atomically and let pugwash perform its normal extraction and cleanup.
+# After first launch, patch the extracted file instead.
+chroot "$ROOTFS" /usr/bin/python3 - "$PLATFORM_FILE" "$PYLIB_ZIP" "$PORT_LAUNCH" <<'PY' || exit 1
+import os
+import sys
+import zipfile
+
+platform_file, pylib_zip, port_launch = sys.argv[1:]
+member = "pylibs/harbourmaster/platform.py"
+
+def patch(data):
+    text = data.decode("utf-8")
+    old_launch = '"launch":"{{PORTSCRIPT}}"'
+    new_launch = f'"launch":"{port_launch}"'
+    if old_launch in text:
+        text = text.replace(old_launch, new_launch)
+    elif new_launch not in text:
+        raise RuntimeError("unknown PortMaster launch template")
+
+    old_icon = '("icon-pre" + image_file.suffix)'
+    new_icon = '("icon.png")'
+    if old_icon in text:
+        text = text.replace(old_icon, new_icon)
+    elif new_icon not in text:
+        raise RuntimeError("unknown PortMaster icon template")
+    return text.encode("utf-8")
+
+if os.path.isfile(platform_file):
+    with open(platform_file, "rb") as fp:
+        data = patch(fp.read())
+    temporary = platform_file + ".tmp"
+    with open(temporary, "wb") as fp:
+        fp.write(data)
+    os.replace(temporary, platform_file)
+elif os.path.isfile(pylib_zip):
+    temporary = pylib_zip + ".tmp"
+    with zipfile.ZipFile(pylib_zip, "r") as source, zipfile.ZipFile(temporary, "w") as target:
+        found = False
+        for info in source.infolist():
+            data = source.read(info.filename)
+            if info.filename == member:
+                data = patch(data)
+                found = True
+            target.writestr(info, data)
+    if not found:
+        os.remove(temporary)
+        raise RuntimeError(f"missing {member} in pylibs.zip")
+    os.replace(temporary, pylib_zip)
+else:
+    raise RuntimeError("missing PortMaster platform.py and pylibs.zip")
+PY
+
 if ! grep -Fqx "controlfolder=\"$CONTROLFOLDER\"" "$PM_APP/launch.sh" ||
    ! grep -Fqx "export controlfolder=\"$CONTROLFOLDER\"" "$CONTROLFOLDER/control.txt" ||
-   ! grep -Fqx 'cd "$controlfolder" || exit 1' "$PM_APP/launch.sh" ||
-   ! grep -Fq "\"launch\":\"$PORT_LAUNCH\"" "$PLATFORM_FILE" ||
-   ! grep -Fq 'target_file = new_port_dir / ("icon.png")' "$PLATFORM_FILE"
+   ! grep -Fqx 'cd "$controlfolder" || exit 1' "$PM_APP/launch.sh"
 then
     echo "Could not repair PortMaster paths: $CONTROLFOLDER" >&2
     exit 1
 fi
-
-. "$APP_DIR/trimui-chroot-mounts.sh" || exit 1
-trimui_mount_chroot || exit 1
 
 # Use TrimUI's native Apps-style entries under /mnt/SDCARD/Ports. PortMaster
 # may rewrite its config during updates, so enforce this before every launch.
@@ -57,8 +102,12 @@ from pathlib import Path
 
 path = sys.argv[1]
 pm_app = sys.argv[2]
-with open(path, encoding="utf-8") as fp:
-    data = json.load(fp)
+os.makedirs(os.path.dirname(path), exist_ok=True)
+if os.path.isfile(path):
+    with open(path, encoding="utf-8") as fp:
+        data = json.load(fp)
+else:
+    data = {}
 data["trimui-port-mode"] = "ports"
 temporary = path + ".tmp"
 with open(temporary, "w", encoding="utf-8") as fp:
