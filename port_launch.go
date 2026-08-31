@@ -57,7 +57,7 @@ func launchPort(manager *Manager, script string) error {
 	shouldLaunch := false
 	app.ShowAlertDialog(opener, fbiw.AlertDialogOptions{
 		Title:       `需要游戏本体`,
-		Description: name + " 不包含游戏本体。\n\nPortMaster 只安装了移植程序和启动脚本；未补齐所需的正版游戏文件时，启动后通常会立即退出。\n\n安装说明：\n" + instructions,
+		Description: name + " 不包含游戏本体。\n\nPortMaster 只安装了移植程序和启动脚本、未补齐所需的正版游戏文件，启动后通常会闪退。\n\n安装说明：\n" + instructions,
 		ActionText:  `仍然启动`,
 		CancelText:  `取消`,
 		OnAction: func() {
