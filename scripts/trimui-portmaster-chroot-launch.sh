@@ -17,6 +17,15 @@ PORT_LAUNCH="$MANAGER_EXECUTABLE --launch-port {{PORTSCRIPT}}"
 . "$APP_DIR/trimui-chroot-mounts.sh" || exit 1
 trimui_mount_chroot || exit 1
 
+# Port launchers pass the port script as an argument. Starting a game only
+# needs the mounted chroot; PortMaster repair, native-entry reconciliation and
+# icon normalization are management tasks and become increasingly expensive as
+# more ports are installed.
+if [ "$#" -gt 0 ]
+then
+    exec chroot "$ROOTFS" /usr/bin/env PM_APP="$PM_APP" "$INNER_LAUNCHER" "$@"
+fi
+
 sed -i \
     "s|^controlfolder=.*|controlfolder=\"$CONTROLFOLDER\"|" \
     "$PM_APP/launch.sh" || exit 1
